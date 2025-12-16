@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -224,58 +223,6 @@
   </style>
 </head>
 <body>
-<div id="game">
-  <div id="top-bar">
-    <div id="night">Nuit 1</div>
-    <div id="time">12 AM</div>
-  </div>
-
-  <div id="office">
-    <div class="door-area" id="left-area">
-      <div class="light-cone" id="left-light-cone"></div>
-      <div class="door" id="left-door"></div>
-      <div class="button" id="left-light-btn">Lumière gauche</div>
-      <div class="button" id="left-door-btn">Porte gauche</div>
-    </div>
-
-    <div id="desk">
-      <div id="monitor">
-        <div id="camera-label">CAM 1A</div>
-        <div id="camera-view"></div>
-        <div id="camera-static"></div>
-        <div id="camera-buttons">
-          <div class="button cam-btn" data-cam="1">CAM 1A</div>
-          <div class="button cam-btn" data-cam="2">CAM 1B</div>
-          <div class="button cam-btn" data-cam="3">CAM 2A</div>
-          <div class="button cam-btn" data-cam="4">CAM 2B</div>
-        </div>
-      </div>
-      <div id="power">
-        Puissance : <span id="power-percent">100%</span>
-        <div id="power-bar"><div id="power-fill"></div></div>
-        Usage : <span id="usage-level">1</span>
-      </div>
-    </div>
-
-    <div class="door-area" id="right-area">
-      <div class="light-cone" id="right-light-cone"></div>
-      <div class="door" id="right-door"></div>
-      <div class="button" id="right-light-btn">Lumière droite</div>
-      <div class="button" id="right-door-btn">Porte droite</div>
-    </div>
-  </div>
-
-  <div id="message"></div>
-  <div id="jumpscare">BOO!</div>
-
-  <div id="start-screen">
-    <h1>Jeu type FNaF - Nuit 1</h1>
-    <p>Utilise les caméras, portes et lumières pour survivre jusqu'à 6 AM.</p>
-    <p><b>Contrôles :</b> Clique sur les boutons.</p>
-    <div class="button" id="start-btn">Commencer</div>
-  </div>
-</div>
-
 <script>
   const timeDisplay = document.getElementById("time");
   const nightDisplay = document.getElementById("night");
@@ -328,9 +275,120 @@
 
     let extra = "";
     if (animatronicStage === 0 && currentCam === 1) extra = " Un animatronique est sur la scène.";
-    if (animatronicStage === 1 && currentCam === 2)
-      <script>
-  const timeDisplay = document.getElementById("time");
-  ...
-</script>
+    if (animatronicStage === 1 && currentCam === 2) extra = " Il a quitté la scène...";
+    if (animatronicStage === 2 && currentCam === 3) extra = " Il approche du bureau.";
+    if (animatronicStage === 3 && currentCam === 4) extra = " Il est juste devant toi !";
 
+    camView.textContent = text + extra;
+  }
+
+  camButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentCam = parseInt(btn.dataset.cam);
+      monitor.classList.add("on");
+      updateCamView();
+    });
+  });
+
+  function updateUsage() {
+    usage = 1;
+    if (leftDoor.classList.contains("closed")) usage++;
+    if (rightDoor.classList.contains("closed")) usage++;
+    if (leftLight.classList.contains("on")) usage++;
+    if (rightLight.classList.contains("on")) usage++;
+    if (monitor.classList.contains("on")) usage++;
+    usageLevelDisplay.textContent = usage;
+  }
+
+  function updatePower() {
+    power -= 0.03 * usage;
+    if (power < 0) power = 0;
+    powerPercentDisplay.textContent = Math.floor(power) + "%";
+    powerFill.style.width = power + "%";
+
+    if (power <= 0) {
+      gameOver(false);
+    }
+  }
+
+  function updateTime() {
+    hour++;
+    if (hour >= 6) {
+      gameOver(true);
+    } else {
+      timeDisplay.textContent = hour + " AM";
+    }
+  }
+
+  function moveAnimatronic() {
+    if (Math.random() < 0.4) {
+      animatronicStage++;
+      if (animatronicStage > 3) animatronicStage = 3;
+      updateCamView();
+    }
+
+    if (animatronicStage === 3) {
+      if (animatronicSide === "left" && !leftDoor.classList.contains("closed")) {
+        gameOver(false);
+      }
+      if (animatronicSide === "right" && !rightDoor.classList.contains("closed")) {
+        gameOver(false);
+      }
+    }
+  }
+
+  function gameOver(win) {
+    clearInterval(timeInterval);
+    clearInterval(powerInterval);
+    clearInterval(aiInterval);
+    gameRunning = false;
+
+    if (win) {
+      message.textContent = "6 AM\nTu as survécu !";
+      message.style.display = "block";
+    } else {
+      jumpscare.style.display = "flex";
+      setTimeout(() => {
+        message.textContent = "Tu es mort !";
+        message.style.display = "block";
+      }, 1500);
+    }
+  }
+
+  leftDoorBtn.addEventListener("click", () => {
+    leftDoor.classList.toggle("closed");
+    leftDoorBtn.classList.toggle("active");
+    updateUsage();
+  });
+
+  rightDoorBtn.addEventListener("click", () => {
+    rightDoor.classList.toggle("closed");
+    rightDoorBtn.classList.toggle("active");
+    updateUsage();
+  });
+
+  leftLightBtn.addEventListener("click", () => {
+    leftLight.classList.toggle("on");
+    leftLightBtn.classList.toggle("active");
+    updateUsage();
+  });
+
+  rightLightBtn.addEventListener("click", () => {
+    rightLight.classList.toggle("on");
+    rightLightBtn.classList.toggle("active");
+    updateUsage();
+  });
+
+  startBtn.addEventListener("click", () => {
+    startScreen.style.display = "none";
+    gameRunning = true;
+
+    timeInterval = setInterval(updateTime, 8000);
+    powerInterval = setInterval(updatePower, 300);
+    aiInterval = setInterval(moveAnimatronic, 5000);
+
+    updateCamView();
+  });
+</script>
+</body>
+</html>
